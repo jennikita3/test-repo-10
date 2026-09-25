@@ -15,14 +15,27 @@ No hace falta ningún otro mod. Quita el `Bottle_MESH.package` original, porque 
 
 ## Cómo se juega
 
-La botella está en el modo Comprar como «Botella para jugar a la botella». Ponla en el suelo, con sitio libre alrededor.
+La botella está en el modo Comprar como «Botella para jugar a la botella». Ponla en el suelo, con sitio libre alrededor. Al hacer clic en ella salen dos opciones:
 
-1. **Sentarse a jugar (de rodillas)** o **Sentarse a jugar (piernas cruzadas)**. Los Sims se sientan en círculo alrededor de la botella. Siéntalos a todos los que vayan a jugar.
+1. **Jugar a la botella**. Se abre un selector con los Sims del solar (de adolescente en adelante). El Sim que abre el selector ya sale marcado. Marca a los que quieras, hasta 8, y acepta. Todos van a sentarse en círculo alrededor de la botella, cada uno de rodillas o con las piernas cruzadas al azar.
 2. **Girar la botella**. Un Sim se acerca, se agacha y hace girar la botella. La botella acaba señalando a uno de los Sims sentados, elegido al azar.
-3. Los dos se ponen frente a frente y se besan. El resto de Sims sentados los animan.
-4. Después, los que estaban sentados vuelven a su sitio en el círculo, y otro Sim puede girar la botella.
+
+Después todo va solo: los dos se ponen frente a frente y se besan, y el resto de Sims sentados los animan. Al acabar, los que estaban sentados vuelven a su sitio en el círculo, y otro Sim puede girar la botella.
 
 Los dos Sims que se besan consiguen el estado de ánimo «¡Me tocó la botella!» (Seguro, 3 horas) y suben 10 puntos de romance entre ellos.
+
+## Qué animación hace cada Sim
+
+No hay que vincular nada a mano. Cada animación va dentro de una interacción, y la interacción la hace un Sim concreto, así que la animación se le aplica a ese Sim. El script decide qué interacción recibe cada uno:
+
+| Quién | Interacción | Animación de Love4Sims |
+| --- | --- | --- |
+| Cada Sim elegido en el selector | Sentarse a jugar | «sitted on knees» o «sitting cross legs» |
+| El Sim que gira | Girar la botella | «Sim» (girar la botella) |
+| La botella | Girar la botella (a la vez) | «bottle spining» |
+| El Sim que gira | Beso de la botella | «Preparing to Kiss - Sims1» y después «kissing: giving the kiss» |
+| El Sim señalado | Beso de la botella | «Preparing to be kissed - Sims2» y después «kissing: being kissed» |
+| El resto de sentados | Animar a la pareja | «Cheering Sims» |
 
 ## Quién puede besarse
 
@@ -41,7 +54,7 @@ Abre la consola de trucos (Ctrl+Mayús+C) y escribe:
 jennikita.botella_reiniciar
 ```
 
-Olvida las partidas en curso. Los Sims se pueden volver a sentar y a girar la botella.
+Olvida las partidas en curso y se puede volver a jugar.
 
 ## Qué hay que comprobar en el juego
 
@@ -51,6 +64,7 @@ El mod no se ha podido probar dentro del juego. Se ha comprobado que las referen
 - Que los dos Sims del beso queden bien alineados.
 - Que la botella acabe señalando al Sim elegido. Si señala al lado contrario o a otro sitio, hay que cambiar `ANGULO_FINAL_BOTELLA` en el script.
 - Que las poses de sentado duren mientras el Sim está en el círculo.
+- Que el selector de «Jugar a la botella» salga y que los elegidos vayan a sentarse.
 
 Si algo falla, el archivo `lastException` de la carpeta de Los Sims 4 dice qué ha pasado.
 

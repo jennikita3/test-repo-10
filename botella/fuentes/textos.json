@@ -1,16 +1,68 @@
 {
   "_nota": "clave: [texto en español, texto en inglés, clave fija opcional]. Las claves fijas son las que ya usan los datos binarios del objeto y del estado de ánimo.",
-  "objeto_nombre": ["Botella para jugar a la botella", "Spin the Bottle Game - Bottle", "0xC7599967"],
-  "objeto_descripcion": ["Sentaos en círculo alrededor de la botella y que alguien la haga girar: ¿a quién le tocará el beso? Botella de simsstories20 y animaciones de Love4Sims.", "Sit in a circle around the bottle and let someone spin it: who will get the kiss? Bottle by simsstories20, animations by Love4Sims.", "0x0403D775"],
-  "sentarse_rodillas": ["Sentarse a jugar (de rodillas)", "Sit Down to Play (Kneeling)"],
-  "sentarse_cruzado": ["Sentarse a jugar (piernas cruzadas)", "Sit Down to Play (Cross-Legged)"],
-  "sentarse_tooltip": ["Siéntate en el círculo para que la botella pueda señalarte.", "Sit in the circle so the bottle can point at you."],
-  "girar": ["Girar la botella", "Spin the Bottle"],
-  "girar_tooltip": ["La botella señalará a uno de los Sims sentados alrededor… ¡y tocará beso!", "The bottle will point at one of the Sims sitting around it… and it's kissing time!"],
-  "esperar": ["Prepararse para el beso", "Get Ready for the Kiss"],
-  "besar": ["Beso de la botella", "Spin the Bottle Kiss"],
-  "animar": ["Animar a la pareja", "Cheer for the Couple"],
-  "buff_nombre": ["¡Me tocó la botella!", "The Bottle Picked Me!", "0x615EBB2F"],
-  "buff_descripcion": ["Besar es lo mejor del mundo… pero un beso de la botella te vuela la cabeza.", "Kissing is the best thing in the world… but a spin the bottle kiss blows your mind.", "0xE5681A5C"],
-  "buff_motivo": ["(Por jugar a la botella)", "(From Spin the Bottle)", "0x093FB1C3"]
+  "objeto_nombre": [
+    "Botella para jugar a la botella",
+    "Spin the Bottle Game - Bottle",
+    "0xC7599967"
+  ],
+  "objeto_descripcion": [
+    "Sentaos en círculo alrededor de la botella y que alguien la haga girar: ¿a quién le tocará el beso? Botella de simsstories20 y animaciones de Love4Sims.",
+    "Sit in a circle around the bottle and let someone spin it: who will get the kiss? Bottle by simsstories20, animations by Love4Sims.",
+    "0x0403D775"
+  ],
+  "jugar": [
+    "Jugar a la botella",
+    "Play Spin the Bottle"
+  ],
+  "jugar_tooltip": [
+    "Elige a los Sims que se sentarán a jugar alrededor de la botella.",
+    "Choose the Sims who will sit around the bottle to play."
+  ],
+  "sentarse_rodillas": [
+    "Sentarse a jugar (de rodillas)",
+    "Sit Down to Play (Kneeling)"
+  ],
+  "sentarse_cruzado": [
+    "Sentarse a jugar (piernas cruzadas)",
+    "Sit Down to Play (Cross-Legged)"
+  ],
+  "sentarse_tooltip": [
+    "Siéntate en el círculo para que la botella pueda señalarte.",
+    "Sit in the circle so the bottle can point at you."
+  ],
+  "girar": [
+    "Girar la botella",
+    "Spin the Bottle"
+  ],
+  "girar_tooltip": [
+    "La botella señalará a uno de los Sims sentados alrededor… ¡y tocará beso!",
+    "The bottle will point at one of the Sims sitting around it… and it's kissing time!"
+  ],
+  "esperar": [
+    "Prepararse para el beso",
+    "Get Ready for the Kiss"
+  ],
+  "besar": [
+    "Beso de la botella",
+    "Spin the Bottle Kiss"
+  ],
+  "animar": [
+    "Animar a la pareja",
+    "Cheer for the Couple"
+  ],
+  "buff_nombre": [
+    "¡Me tocó la botella!",
+    "The Bottle Picked Me!",
+    "0x615EBB2F"
+  ],
+  "buff_descripcion": [
+    "Besar es lo mejor del mundo… pero un beso de la botella te vuela la cabeza.",
+    "Kissing is the best thing in the world… but a spin the bottle kiss blows your mind.",
+    "0xE5681A5C"
+  ],
+  "buff_motivo": [
+    "(Por jugar a la botella)",
+    "(From Spin the Bottle)",
+    "0x093FB1C3"
+  ]
 }

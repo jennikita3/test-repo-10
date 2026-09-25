@@ -113,8 +113,7 @@
     <T>13328<!--debug_Reset--></T>
     <T>13326<!--debug_ObjectDestroy--></T>
     <T>103888<!--cheat_set_as_head--></T>
-    <T>{{id:Jennikita:Botella_Sentarse_Rodillas}}</T>
-    <T>{{id:Jennikita:Botella_Sentarse_Cruzado}}</T>
+    <T>{{id:Jennikita:Botella_Jugar}}</T>
     <T>{{id:Jennikita:Botella_Girar}}</T>
   </L>
   <L n="environment_score_trait_modifiers">

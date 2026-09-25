@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<I c="BotellaJugarInteraction" i="interaction" m="jennikita_botella" n="Jennikita:Botella_Jugar" s="{{id:Jennikita:Botella_Jugar}}">
+  <T n="allow_autonomous">False</T>
+  <T n="allow_user_directed">True</T>
+  <T n="display_name">{{str:jugar}}</T>
+  <V n="display_tooltip" t="enabled">
+    <T n="enabled">{{str:jugar_tooltip}}</T>
+  </V>
+  <T n="pie_menu_priority">9</T>
+  <V n="pie_menu_icon" t="enabled">
+    <V n="enabled" t="resource_key">
+      <U n="resource_key">
+        <T n="key">00b2d882:00000000:2042072f05fb1c99</T>
+      </U>
+    </V>
+  </V>
+  <E n="target_type">OBJECT</E>
+  <L n="test_globals">
+    <V t="sim_info">
+      <U n="sim_info">
+        <V n="ages" t="specified">
+          <L n="specified">
+            <E>TEEN</E>
+            <E>YOUNGADULT</E>
+            <E>ADULT</E>
+            <E>ELDER</E>
+          </L>
+        </V>
+        <V n="species" t="specified">
+          <U n="specified">
+            <L n="species">
+              <E>HUMAN</E>
+            </L>
+          </U>
+        </V>
+        <E n="who">Actor</E>
+      </U>
+    </V>
+  </L>
+</I>

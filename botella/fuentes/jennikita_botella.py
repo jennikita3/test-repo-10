@@ -2,8 +2,9 @@
 Juego de la botella - Jennikita
 
 Interacciones de la botella (el tuning está en el .package):
-  - Sentarse a jugar (de rodillas / piernas cruzadas): el Sim se sienta en el
-    círculo alrededor de la botella. Solo los Sims sentados pueden salir.
+  - Jugar a la botella: abre un selector de Sims. Los elegidos van a sentarse
+    en círculo alrededor de la botella, cada uno de rodillas o con las piernas
+    cruzadas al azar. Solo los Sims sentados pueden salir en la botella.
   - Girar la botella: se elige al azar un Sim sentado con el que el Sim que
     gira pueda besarse, se orienta la botella para que acabe apuntándole, se
     reproduce el giro y después los dos se colocan uno frente al otro y se
@@ -31,6 +32,7 @@ import sims4.log
 import sims4.math
 import sims4.resources
 from event_testing.results import TestResult
+from interactions.base.immediate_interaction import ImmediateSuperInteraction
 from interactions.base.super_interaction import SuperInteraction
 from interactions.context import InteractionContext, QueueInsertStrategy
 from interactions.interaction_finisher import FinishingType
@@ -39,6 +41,7 @@ from sims.sim_info_types import Age, Species
 from sims4.localization import LocalizationHelperTuning
 from sims4.tuning.tunable import Tunable
 from ui.ui_dialog_notification import UiDialogNotification
+from ui.ui_dialog_picker import SimPickerRow, UiSimPicker
 
 logger = sims4.log.Logger('JennikitaBotella', default_owner='Jennikita')
 
@@ -59,6 +62,11 @@ TEXTO_SIN_PAREJA = ('Tiene que haber otro Sim sentado a jugar alrededor de la bo
 TEXTO_NADIE = 'La botella ha girado… pero no señala a nadie. ¡Hacen falta más jugadores!'
 TEXTO_SENALA = '¡La botella de {} señala a {}! Toca beso.'
 TEXTO_PLANTON = '{} no ha llegado a tiempo. ¡Otra vez será!'
+TEXTO_SELECTOR = 'Elige quién se sienta a jugar alrededor de la botella.'
+
+# Máximo de Sims en el círculo (luego el sitio alrededor de la botella también limita).
+MAXIMO_JUGADORES = 8
+SENTARSE = ('Jennikita:Botella_Sentarse_Rodillas', 'Jennikita:Botella_Sentarse_Cruzado')
 
 _ADULTOS = (Age.YOUNGADULT, Age.ADULT, Age.ELDER)
 
@@ -268,6 +276,55 @@ def _empezar_beso(partida):
 
 
 # --- Interacciones ------------------------------------------------------------
+
+def _jugables(actor):
+    """Sims que se pueden sentar a jugar: humanos de adolescente en adelante."""
+    sims = [sim for sim in services.sim_info_manager().instanced_sims_gen()
+            if _franja(sim.sim_info) is not None]
+    # Primero el Sim que abre el selector y los de su casa.
+    sims.sort(key=lambda s: (s is not actor, s.sim_info.household_id != actor.sim_info.household_id,
+                             _nombre(s)))
+    return sims
+
+
+def _esta_sentado(sim, botella):
+    return any(s is sim for s, _ in _sentados(botella))
+
+
+class BotellaJugarInteraction(ImmediateSuperInteraction):
+
+    def _run_interaction_gen(self, timeline):
+        try:
+            self._mostrar_selector()
+        except Exception as e:
+            logger.error('Error al abrir el selector de jugadores: {}', e)
+        result = yield from super()._run_interaction_gen(timeline)
+        return result
+
+    def _mostrar_selector(self):
+        actor, botella = self.sim, self.target
+        sims = _jugables(actor)
+        dialogo = UiSimPicker.TunableFactory().default(
+            actor.sim_info, title=_texto(TITULO), text=_texto(TEXTO_SELECTOR),
+            min_selectable=1, max_selectable=min(MAXIMO_JUGADORES, len(sims)),
+            should_show_names=True, hide_row_description=False, column_count=5)
+        for sim in sims:
+            dialogo.add_row(SimPickerRow(sim.sim_id, select_default=sim is actor, tag=sim.sim_info))
+
+        def _elegidos(dialogo):
+            if not dialogo.accepted:
+                return
+            try:
+                for info in dialogo.get_result_tags():
+                    sim = info.get_sim_instance()
+                    if sim is not None and not _esta_sentado(sim, botella):
+                        _empujar(sim, random.choice(SENTARSE), botella)
+            except Exception as e:
+                logger.error('Error al sentar a los jugadores: {}', e)
+
+        dialogo.add_listener(_elegidos)
+        dialogo.show_dialog()
+
 
 class BotellaSentarseInteraction(SuperInteraction):
 
