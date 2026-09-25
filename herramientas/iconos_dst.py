@@ -148,7 +148,8 @@ def codificar_dxt5(img):
             _empaquetar(ic, 2, 4))
 
 
-def png_a_dst5(png):
+def png_a_dst5(png, formato=b'DST5'):
+    """PNG -> DST5 (con alfa) o DST1 (sin alfa, la mitad de tamaño), con mipmaps."""
     im = Image.open(io.BytesIO(png)).convert('RGBA')
     w, h = im.size
     niveles, cw, ch = [], w, h
@@ -158,12 +159,14 @@ def png_a_dst5(png):
         if cw == 1 and ch == 1:
             break
         cw, ch = max(1, cw // 2), max(1, ch // 2)
-    # DST5 guarda los bloques de toda la cadena de mipmaps separados en 4 tiras:
-    # extremos alfa, extremos color, índices alfa, índices color.
-    cuerpo = b''.join(np.concatenate([n[k] for n in niveles]).tobytes() for k in (0, 2, 1, 3))
+    # Los bloques de toda la cadena de mipmaps van separados en tiras.
+    # DST5: extremos alfa, extremos color, índices alfa, índices color.
+    # DST1: extremos color, índices color.
+    tiras = (2, 3) if formato == b'DST1' else (0, 2, 1, 3)
+    cuerpo = b''.join(np.concatenate([n[k] for n in niveles]).tobytes() for k in tiras)
     cab = bytearray(128)
     struct.pack_into('<4sIIIIIII', cab, 0, b'DDS ', 124, 0x21007, h, w, 0, 1, len(niveles))
-    struct.pack_into('<II4s', cab, 76, 32, 4, b'DST5')
+    struct.pack_into('<II4s', cab, 76, 32, 4, formato)
     struct.pack_into('<I', cab, 108, 0x401008)
     return bytes(cab) + cuerpo
 

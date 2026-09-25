@@ -72,7 +72,7 @@ Si algo falla, el archivo `lastException` de la carpeta de Los Sims 4 dice qué 
 
 **Animaciones.** En el pack de Love4Sims, cada animación colocaba al Sim en su sitio de la escena original (por ejemplo, la pareja del beso a ±0,38 m del centro). Las 5 animaciones de girar y besar se han centrado en el origen, y el script coloca a cada Sim. El resto de la animación no cambia. Estos clips llevan nombres nuevos para no chocar con el pack de poses original.
 
-**Botella.** Se conservan la malla, las texturas, el catálogo y el estado de ánimo. La interacción que traía se ha sustituido por las del juego completo, y el icono del estado de ánimo ahora apunta a su imagen DST.
+**Botella.** Se conservan la malla, el catálogo y el estado de ánimo. La textura lleva pintada la foto de una botella de vino tinto (tapón rojo, cristal oscuro y etiqueta crema) sobre la zona que usa el modelo; el resto de la textura no cambia. La interacción que traía se ha sustituido por las del juego completo, y el icono del estado de ánimo ahora apunta a su imagen DST.
 
 **Textos.** Están en español para el juego en español y en inglés para el resto de idiomas.
 
@@ -86,6 +86,14 @@ PYTHON37=/ruta/a/python3.7 python3 herramientas/construir_botella.py \
 ```
 
 Necesita Python 3.7 para compilar el script, además de Pillow y numpy.
+
+Para cambiar la textura de la botella por otra foto (botella de frente, derecha y con fondo blanco o transparente):
+
+```
+python3 herramientas/texturizar_botella.py Bottle_MESH.package foto.png botella/fuentes/texturas/Botella_Difusa.png
+```
+
+La foto se reparte por tramos (cuello, hombros y cuerpo) para que no se deforme. Después hay que volver a construir el mod.
 
 ## Créditos
 

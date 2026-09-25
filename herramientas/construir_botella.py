@@ -48,6 +48,9 @@ CLIPS_CENTRADOS = {
 ICONOS = {0x6D21261B31458EBB, 0x8685C4A352B0A407, 0x449152D865C905EF,
           0x69922336B8917F78, 0x2042072F05FB1C99}
 
+# Textura principal de la botella (DST1 512x512); se sustituye por fuentes/texturas/Botella_Difusa.png.
+DIFUSA = 0xA4056A7926B07DAE
+
 ESPANOL = 0x13
 ROOT_BIND = 0x57884BB9  # b__ROOT_bind__
 MIRANDO_AL_FRENTE = (0.5, 0.5, 0.5, 0.5)
@@ -210,6 +213,13 @@ def iconos_propios():
     return salida
 
 
+def textura_botella(originales):
+    """La textura de la botella con la foto pintada encima (ver texturizar_botella.py)."""
+    ruta = os.path.join(FUENTES, 'texturas', 'Botella_Difusa.png')
+    original = next(r for r in originales if r['t'] == IMAGEN and ((r['ih'] << 32) | r['il']) == DIFUSA)
+    return recurso(IMAGEN, original['g'], DIFUSA, png_a_dst5(open(ruta, 'rb').read(), b'DST1'))
+
+
 def tabla_textos(entradas):
     cuerpo = bytearray()
     total = 0
@@ -247,7 +257,9 @@ def main(animaciones, botella, salida):
     cabecera, rec_botella = leer_paquete(botella)
     textos = cargar_textos()
 
-    recursos = [r for r in rec_botella if r['t'] not in TIPOS_SUSTITUIDOS]
+    recursos = [r for r in rec_botella if r['t'] not in TIPOS_SUSTITUIDOS
+                and not (r['t'] == IMAGEN and ((r['ih'] << 32) | r['il']) == DIFUSA)]
+    recursos.append(textura_botella(rec_botella))
     recursos += clips(rec_anim)
     recursos += [r for r in rec_anim if r['t'] == IMAGEN and ((r['ih'] << 32) | r['il']) in ICONOS]
     recursos += iconos_propios()
