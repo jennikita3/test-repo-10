@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<I c="AnimationElement" i="animation" m="animation.animation_element" n="Jennikita:Botella_Anim_Animar" s="{{id:Jennikita:Botella_Anim_Animar}}">
+  <T n="asm_key">{{asm:Jennikita:Botella_ASM_Sim}}</T>
+  <L n="begin_states">
+    <T>Animar</T>
+  </L>
+</I>

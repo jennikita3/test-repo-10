@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<I c="LootActions" i="action" m="interactions.utils.loot" n="Jennikita:Botella_Loot_Beso" s="{{id:Jennikita:Botella_Loot_Beso}}">
+  <L n="loot_actions">
+    <V t="buff">
+      <U n="buff">
+        <U n="buff">
+          <V n="buff_reason" t="enabled">
+            <T n="enabled">{{str:buff_motivo}}</T>
+          </V>
+          <T n="buff_type">13184712730700847785<!--L4S:spin_bottle_buff_tuning--></T>
+        </U>
+        <U n="chance">
+          <T n="base_chance">100</T>
+        </U>
+      </U>
+    </V>
+  </L>
+</I>

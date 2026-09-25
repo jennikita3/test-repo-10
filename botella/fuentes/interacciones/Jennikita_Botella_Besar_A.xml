@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<I c="BotellaBesarInteraction" i="interaction" m="jennikita_botella" n="Jennikita:Botella_Besar_A" s="{{id:Jennikita:Botella_Besar_A}}">
+  <T n="rol">A</T>
+  <T n="allow_autonomous">False</T>
+  <T n="allow_user_directed">True</T>
+  <T n="display_name">{{str:besar}}</T>
+  <T n="pie_menu_priority">8</T>
+  <V n="pie_menu_icon" t="enabled">
+    <V n="enabled" t="resource_key">
+      <U n="resource_key">
+        <T n="key">00b2d882:00000000:449152d865c905ef</T>
+      </U>
+    </V>
+  </V>
+  <E n="target_type">OBJECT</E>
+  <V n="basic_content" t="one_shot">
+    <U n="one_shot">
+      <U n="animation_ref">
+        <T n="factory">{{id:Jennikita:Botella_Anim_BesoA}}</T>
+      </U>
+    </U>
+  </V>
+  <V n="outcome" t="single">
+    <U n="single">
+      <U n="actions">
+        <L n="loot_list">
+          <T>{{id:Jennikita:Botella_Loot_Beso}}</T>
+        </L>
+      </U>
+    </U>
+  </V>
+  <V n="basic_reserve_object" t="enabled">
+    <U n="enabled">
+      <L n="subject_list">
+        <U>
+          <V n="reserve_type" t="multi" />
+        </U>
+      </L>
+    </U>
+  </V>
+  <V n="content_score" t="disabled" />
+  <L n="test_globals">
+    <V t="sim_info">
+      <U n="sim_info">
+        <V n="ages" t="specified">
+          <L n="specified">
+            <E>TEEN</E>
+            <E>YOUNGADULT</E>
+            <E>ADULT</E>
+            <E>ELDER</E>
+          </L>
+        </V>
+        <V n="species" t="specified">
+          <U n="specified">
+            <L n="species">
+              <E>HUMAN</E>
+            </L>
+          </U>
+        </V>
+        <E n="who">Actor</E>
+      </U>
+    </V>
+  </L>
+</I>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<I c="BotellaSentarseInteraction" i="interaction" m="jennikita_botella" n="Jennikita:Botella_Sentarse_Rodillas" s="{{id:Jennikita:Botella_Sentarse_Rodillas}}">
+  <T n="allow_autonomous">False</T>
+  <T n="allow_user_directed">True</T>
+  <T n="display_name">{{str:sentarse_rodillas}}</T>
+  <V n="display_tooltip" t="enabled">
+    <T n="enabled">{{str:sentarse_tooltip}}</T>
+  </V>
+  <T n="pie_menu_priority">6</T>
+  <V n="pie_menu_icon" t="enabled">
+    <V n="enabled" t="resource_key">
+      <U n="resource_key">
+        <T n="key">00b2d882:00000000:69922336b8917f78</T>
+      </U>
+    </V>
+  </V>
+  <E n="target_type">OBJECT</E>
+  <L n="_constraints">
+    <U>
+      <L n="constraints">
+        <U>
+          <V n="value" t="cone">
+            <U n="cone">
+              <T n="angle">360</T>
+              <T n="ideal_radius_max">1.0</T>
+              <T n="ideal_radius_min">0.85</T>
+              <T n="max_radius">1.2</T>
+              <T n="min_radius">0.8</T>
+            </U>
+          </V>
+        </U>
+        <U>
+          <V n="value" t="facing" />
+        </U>
+      </L>
+    </U>
+  </L>
+  <V n="basic_content" t="flexible_length">
+    <U n="flexible_length">
+      <L n="conditional_actions">
+        <V t="list_reference">
+          <T n="list_reference">40705<!--ExitConditionList_MotivesNearFail--></T>
+        </V>
+      </L>
+      <V n="content" t="staging_content">
+        <U n="staging_content">
+          <U n="content_set">
+            <L n="affordance_links">
+              <T>{{id:Jennikita:Botella_Mixer_Rodillas}}</T>
+            </L>
+          </U>
+        </U>
+      </V>
+      <T n="start_autonomous_inertial">False</T>
+    </U>
+  </V>
+  <V n="basic_reserve_object" t="enabled">
+    <U n="enabled">
+      <L n="subject_list">
+        <U>
+          <V n="reserve_type" t="multi" />
+        </U>
+      </L>
+    </U>
+  </V>
+  <V n="content_score" t="disabled" />
+  <L n="test_globals">
+    <V t="sim_info">
+      <U n="sim_info">
+        <V n="ages" t="specified">
+          <L n="specified">
+            <E>TEEN</E>
+            <E>YOUNGADULT</E>
+            <E>ADULT</E>
+            <E>ELDER</E>
+          </L>
+        </V>
+        <V n="species" t="specified">
+          <U n="specified">
+            <L n="species">
+              <E>HUMAN</E>
+            </L>
+          </U>
+        </V>
+        <E n="who">Actor</E>
+      </U>
+    </V>
+  </L>
+</I>
