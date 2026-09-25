@@ -22,7 +22,7 @@ import zipfile
 import zlib
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from iconos_dst import leer_paquete, escribir_paquete, ZLIB  # noqa: E402
+from iconos_dst import leer_paquete, escribir_paquete, png_a_dst5, ZLIB  # noqa: E402
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FUENTES = os.path.join(RAIZ, 'botella', 'fuentes')
@@ -44,9 +44,9 @@ CLIPS_CENTRADOS = {
     'set_5': 'BesoB_Preparar',
     'set_6': 'BesoB_Besar',
 }
-# Iconos del pack de Love4Sims que usan las interacciones.
-ICONOS = {0x99F8E028DF8B973F, 0x6D21261B31458EBB, 0x8685C4A352B0A407,
-          0x449152D865C905EF, 0x69922336B8917F78, 0x2042072F05FB1C99}
+# Iconos del pack de Love4Sims que usan las interacciones de la cola del Sim.
+ICONOS = {0x6D21261B31458EBB, 0x8685C4A352B0A407, 0x449152D865C905EF,
+          0x69922336B8917F78, 0x2042072F05FB1C99}
 
 ESPANOL = 0x13
 ROOT_BIND = 0x57884BB9  # b__ROOT_bind__
@@ -175,6 +175,8 @@ def rellenar(xml, textos):
             return '0x%08X' % textos[valor][0]
         if tipo == 'clip':
             return nombre_clip(valor)
+        if tipo == 'icono':
+            return '00b2d882:00000000:%016x' % id_tuning(valor)
         raise ValueError(m.group(0))
     xml = re.sub(r'\{\{(\w+):([^}]+)\}\}', sustituir, xml)
     if '{{' in xml:
@@ -194,6 +196,17 @@ def tuning(textos):
                 cab = re.search(r'<I c="[^"]+" i="([^"]+)" m="[^"]+" n="[^"]+" s="(\d+)"', xml)
                 tipo, instancia = TIPO_TUNING[cab.group(1)], int(cab.group(2))
             salida.append(recurso(tipo, 0, instancia, xml.encode('utf-8')))
+    return salida
+
+
+def iconos_propios():
+    """Iconos del menú dibujados para el mod (PNG en fuentes/iconos, se pasan a DST)."""
+    carpeta = os.path.join(FUENTES, 'iconos')
+    salida = []
+    for archivo in sorted(os.listdir(carpeta)):
+        nombre = os.path.splitext(archivo)[0].replace('_Botella_', ':Botella_', 1)
+        png = open(os.path.join(carpeta, archivo), 'rb').read()
+        salida.append(recurso(IMAGEN, 0, id_tuning(nombre), png_a_dst5(png)))
     return salida
 
 
@@ -237,6 +250,7 @@ def main(animaciones, botella, salida):
     recursos = [r for r in rec_botella if r['t'] not in TIPOS_SUSTITUIDOS]
     recursos += clips(rec_anim)
     recursos += [r for r in rec_anim if r['t'] == IMAGEN and ((r['ih'] << 32) | r['il']) in ICONOS]
+    recursos += iconos_propios()
     recursos += tuning(textos)
     recursos += tablas_textos(textos, [r for r in rec_botella if r['t'] == STBL])
 
