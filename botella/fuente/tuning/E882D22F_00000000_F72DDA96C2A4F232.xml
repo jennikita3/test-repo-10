@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<I c="SuperInteraction" i="interaction" m="interactions.base.super_interaction" n="Jennikita:Botella_Levantarse" s="15609084680340951037">
+<I c="SuperInteraction" i="interaction" m="interactions.base.super_interaction" n="Jennikita:Botella_Ir_Al_Sitio" s="17811132442365719090">
   <T n="allow_autonomous">False</T>
   <T n="allow_user_directed">True</T>
-  <T n="display_name">0xAB6EE927</T>
-  <T n="pie_menu_priority">8</T>
+  <T n="display_name">0xC6A0D15C</T>
+  <V n="display_tooltip" t="enabled">
+    <T n="enabled">0x642A727E</T>
+  </V>
+  <T n="pie_menu_priority">6</T>
   <V n="pie_menu_icon" t="enabled">
     <V n="enabled" t="resource_key">
       <U n="resource_key">
-        <T n="key">00b2d882:00000000:8685c4a352b0a407</T>
+        <T n="key">00b2d882:00000000:d2c596f5de1477f2</T>
       </U>
     </V>
   </V>
@@ -15,6 +18,20 @@
   <L n="_constraints">
     <U>
       <L n="constraints">
+        <U>
+          <V n="value" t="cone">
+            <U n="cone">
+              <T n="angle">360</T>
+              <T n="ideal_radius_max">1.0</T>
+              <T n="ideal_radius_min">0.85</T>
+              <T n="max_radius">1.2</T>
+              <T n="min_radius">0.7</T>
+            </U>
+          </V>
+        </U>
+        <U>
+          <V n="value" t="facing" />
+        </U>
         <U>
           <V n="value" t="posture">
             <U n="posture">

@@ -12,6 +12,30 @@
     </V>
   </V>
   <E n="target_type">OBJECT</E>
+  <L n="_constraints">
+    <U>
+      <L n="constraints">
+        <U>
+          <V n="value" t="posture">
+            <U n="posture">
+              <L n="posture_manifest_tuning">
+                <U>
+                  <V n="carry_left" t="Any" />
+                  <V n="carry_right" t="Any" />
+                  <V n="compatibility" t="Any" />
+                  <V n="posture_type" t="enabled">
+                    <T n="enabled">15537<!--posture_Stand--></T>
+                  </V>
+                  <V n="surface" t="None" />
+                  <V n="target_object_filter" t="disabled" />
+                </U>
+              </L>
+            </U>
+          </V>
+        </U>
+      </L>
+    </U>
+  </L>
   <V n="basic_content" t="one_shot">
     <U n="one_shot">
       <U n="animation_ref">

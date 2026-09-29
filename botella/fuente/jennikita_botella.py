@@ -4,13 +4,13 @@ Juego de la botella - Jennikita (botella y alfombra de SIXAMcc)
 Rehecho desde cero en la versión 2. Todas las animaciones de los Sims son del juego:
   - Sentarse: las posturas del juego "de rodillas" (posture_Kneel) y "piernas
     cruzadas" (posture_CrossLegged), las mismas de "Sentarse en el suelo".
-  - Girar: solo se anima la botella. Si el juego lo permite, el Sim gira sin
-    levantarse; si no, se levanta, gira y luego vuelve a sentarse.
+  - Girar: solo se anima la botella; el Sim al que le toca se pone de pie
+    para girarla (de pie, porque es la única postura que acepta la animación).
   - Beso: los dos se levantan (postura de pie del juego) y se besan con el
     beso del juego (Soc_Romance_T_Kiss_Embrace_Succeed_basic), dentro de una
     charla normal y sin las pruebas de romance del juego.
   - Animar: la animación del público del juego
-    (reactionlets_Audience_CheerRandom), sentados si se puede.
+    (reactionlets_Audience_CheerRandom), de pie.
 
 Cómo se juega:
   "Jugar a la botella" abre un selector de Sims. Los elegidos se sientan en
@@ -31,6 +31,13 @@ v3 - El script sigue cada interacción que manda hasta que termina, en vez de
   se levantaban sin parar, no se sentaban en círculo y la botella giraba tarde).
   Antes del beso los dos se levantan, porque el beso del juego no se puede
   hacer de rodillas ni sentado en el suelo.
+
+v4 - Para sentarse en su hueco, cada Sim camina primero hasta el círculo de pie
+  ("Ir al sitio"), el script le coloca en su hueco mirando a la botella y
+  después se sienta ahí. La v3 le mandaba andar directamente al hueco con una
+  restricción de ruta, y el juego no encontraba el camino (el gesto de error);
+  la v1 del mod antiguo ya lo había visto. Girar y animar se hacen siempre de
+  pie: sentados, el juego daba la acción por hecha pero sin animación.
 
 El tuning usa clases del juego (así las interacciones siempre se cargan) y
 este script les añade el comportamiento cuando el juego termina de cargar el
@@ -57,18 +64,16 @@ import sims4.log
 import sims4.math
 import sims4.resources
 from date_and_time import create_time_span
-from interactions import ParticipantType
 from interactions.aop import AffordanceObjectPair
 from interactions.context import InteractionContext, QueueInsertStrategy
 from interactions.interaction_finisher import FinishingType
 from interactions.priority import Priority
 from sims.sim_info_types import Age, Species
 from sims4.localization import LocalizationHelperTuning
-from sims4.utils import flexmethod
 from ui.ui_dialog_notification import UiDialogNotification
 from ui.ui_dialog_picker import SimPickerRow, UiSimPicker
 
-VERSION = 3
+VERSION = 4
 
 # --- Registro -----------------------------------------------------------------
 
@@ -115,22 +120,20 @@ logger = _Registro()
 
 JUGAR = 'Jennikita:Botella_Jugar'
 SENTARSE = ('Jennikita:Botella_Sentarse_Rodillas', 'Jennikita:Botella_Sentarse_Cruzado')
-GIRAR = 'Jennikita:Botella_Girar_Accion'            # de pie
-GIRAR_SENTADO = 'Jennikita:Botella_Girar_Sentado'   # dentro de "Sentarse"
+IR_AL_SITIO = 'Jennikita:Botella_Ir_Al_Sitio'
+GIRAR = 'Jennikita:Botella_Girar_Accion'
 LEVANTARSE = 'Jennikita:Botella_Levantarse'
 BESO = 'Jennikita:Botella_Beso'
-ANIMAR = 'Jennikita:Botella_Animar'                 # de pie
-ANIMAR_SENTADO = 'Jennikita:Botella_Animar_Sentado' # dentro de "Sentarse"
+ANIMAR = 'Jennikita:Botella_Animar'
 SIM_CHAT = 13998  # sim_Chat, la charla normal del juego
 
 # --- Ajustes ------------------------------------------------------------------
 
 ANGULO_FINAL_BOTELLA = 160.0  # dónde queda el cuello de la botella al acabar la animación
 RADIO_ASIENTO = 0.9
-MARGEN_ASIENTO = 0.25
+CERCA_DEL_HUECO = 0.15  # a menos de esto del hueco, se sienta sin volver a "Ir al sitio"
 MAXIMO_JUGADORES = 8
 PRIORIDAD_JUEGO = getattr(Priority, 'Critical', Priority.High)
-ANIMAR_DE_PIE = True  # si no pueden animar sentados, se levantan a animar y vuelven a sentarse
 
 # Esperas máximas, en minutos del juego (se revisa la partida una vez por
 # minuto). Son solo por si algo se queda colgado: normalmente cada paso
@@ -140,8 +143,7 @@ ESPERA_VOLVER = 90
 ESPERA_GIRO = 60
 ESPERA_LEVANTARSE = 30
 ESPERA_BESO = 90
-INTENTOS_SENTARSE = 4  # veces que un Sim puede no llegar a sentarse antes de dejarle fuera
-INTENTOS_CON_HUECO = 2  # a partir de aquí se sienta en cualquier sitio del círculo
+INTENTOS_SENTARSE = 3  # veces que un Sim puede no llegar a sentarse antes de dejarle fuera
 
 TITULO = 'Juego de la botella'
 TEXTO_SELECTOR = 'Elige quién se sienta a jugar alrededor de la botella.'
@@ -159,7 +161,6 @@ _JUEGOS = {}      # id de la botella -> _Juego
 _SENTADOS = {}    # sim_id -> {id de su "Sentarse" en marcha: (id de la botella, interacción)}
 _ASIENTOS = {}    # sim_id -> (id de la botella, posición, giro)
 _POSTURA = {}     # sim_id -> nombre del "Sentarse" que usa (rodillas o cruzado)
-_SIN_ASIENTO = set()  # sim_id que no llegan a su hueco: se sientan en cualquier sitio del círculo
 _ENGANCHADAS = []
 
 
@@ -382,49 +383,36 @@ def _presentes(juego):
     return sims
 
 
+def _postura(sim):
+    try:
+        postura = getattr(sim, 'posture', None)
+        return getattr(postura, 'name', None) or type(postura).__name__
+    except Exception:
+        return '?'
+
+
+def _estado_beso(juego):
+    """Para el log: en qué postura están los dos y si están charlando."""
+    partes = []
+    for sim_id in (juego.girador, juego.pareja):
+        sim = _sim(sim_id)
+        if sim is None:
+            continue
+        charlando = False
+        try:
+            charlando = any(_es(si, _IDS_CHARLA) for si in tuple(sim.si_state or ()))
+        except Exception:
+            pass
+        partes.append('{} ({}{})'.format(_nombre(sim), _postura(sim), ', charlando' if charlando else ''))
+    return ' y '.join(partes)
+
+
 def _dejar_fuera(juego, sim_id, motivo):
     if sim_id in juego.fuera:
         return
     juego.fuera.add(sim_id)
     sim = _sim(sim_id)
     _log('{} sale del juego: {}', _nombre(sim) if sim is not None else sim_id, motivo)
-
-
-# --- Mixers dentro de "Sentarse" ------------------------------------------------
-
-def _mixer_cabe(sim, mixer, objetivo, si):
-    """True si el mixer se puede hacer en la postura en la que está el Sim,
-    False si no, y None si no se ha podido comprobar."""
-    try:
-        aop = AffordanceObjectPair(mixer, objetivo, si.affordance, si)
-        restriccion = aop.constraint_intersection(sim=sim, posture_state=None)
-        return bool(restriccion.intersect(sim.posture_state.posture_constraint_strict).valid)
-    except Exception as e:
-        _log('No se pudo comprobar si {} puede hacer {} sin levantarse: {}', _nombre(sim), mixer.__name__, e)
-        return None
-
-
-def _empujar_mixer(sim, nombre, objetivo, si):
-    """Manda un mixer dentro de la interacción "Sentarse" que el Sim tiene en marcha."""
-    mixer = _afordancia(nombre)
-    if mixer is None:
-        logger.error('No se encuentra la interacción {}', nombre)
-        return None
-    cabe = _mixer_cabe(sim, mixer, objetivo, si)
-    if cabe is False:
-        _log('{} no puede hacer {} sin levantarse', _nombre(sim), nombre)
-        return None
-    try:
-        aop = AffordanceObjectPair(mixer, objetivo, si.affordance, si)
-        resultado = aop.test_and_execute(_contexto(sim, PRIORIDAD_JUEGO))
-    except Exception as e:
-        logger.warn('Error al mandar {} a {}: {}', nombre, _nombre(sim), e)
-        return None
-    if not resultado:
-        logger.warn('No se pudo mandar {} a {}: {}', nombre, _nombre(sim), resultado)
-        return None
-    _log('{} -> {} (sin levantarse)', _nombre(sim), nombre)
-    return _creada(sim, nombre, resultado)
 
 
 # --- Asientos -----------------------------------------------------------------
@@ -458,43 +446,34 @@ def _asiento(sim_id, botella):
     return None
 
 
-def _hacer_constraint_sentarse(clase):
-    """Añade a la restricción del tuning (anillo alrededor de la botella y
-    postura del juego) un círculo en el hueco de cada Sim, para que cada uno
-    camine a su sitio. Si un Sim no consigue llegar, se le quita (_SIN_ASIENTO)."""
-    original = None
-    for base in clase.__mro__:
-        if '_constraint_gen' in base.__dict__:
-            original = base.__dict__['_constraint_gen']
-            break
-    if original is None:
-        return None
-    from interactions.constraints import Circle
-
-    def _constraint_gen(cls, inst, sim, target, participant_type=ParticipantType.Actor, **kwargs):
-        if participant_type == ParticipantType.Actor and sim is not None and target is not None:
-            try:
-                datos = _asiento(sim.sim_id, target)
-                if datos is not None and sim.sim_id not in _SIN_ASIENTO:
-                    yield Circle(datos[1], MARGEN_ASIENTO, target.routing_surface)
-            except Exception as e:
-                logger.error('Error en la restricción del asiento: {}', e)
-        yield from original.__get__(inst, cls)(sim, target, participant_type=participant_type, **kwargs)
-
-    return flexmethod(_constraint_gen)
+def _colocar_en_hueco(sim, botella):
+    """Pone al Sim (de pie) en su hueco, mirando a la botella."""
+    datos = _asiento(sim.sim_id, botella)
+    if datos is None:
+        return
+    distancia = _distancia(sim.position, datos[1])
+    transformacion = sims4.math.Transform(datos[1], sims4.math.angle_to_yaw_quaternion(datos[2]))
+    sim.location = sims4.math.Location(transformacion, botella.routing_surface)
+    _log('{} se coloca en su hueco (estaba a {:.2f} m)', _nombre(sim), distancia)
 
 
 def _mandar_a_sentarse(sim, juego, botella):
+    """Si el Sim ya está en su hueco, se sienta; si no, primero va hasta el
+    círculo ("Ir al sitio") y al llegar se le coloca en su hueco y se sienta."""
     clave = ('sentarse', sim.sim_id)
     if _esta_sentado(sim, botella) or _pendiente(juego.mandadas.get(clave)):
         return
-    nombre = _POSTURA.get(sim.sim_id)
-    if nombre is None:
-        nombre = _POSTURA[sim.sim_id] = random.choice(SENTARSE)
+    datos = _asiento(sim.sim_id, botella)
+    if datos is not None and _distancia(sim.position, datos[1]) > CERCA_DEL_HUECO:
+        nombre = IR_AL_SITIO
+    else:
+        nombre = _POSTURA.get(sim.sim_id)
+        if nombre is None:
+            nombre = _POSTURA[sim.sim_id] = random.choice(SENTARSE)
     interaccion = _empujar(sim, nombre, botella)
     juego.mandadas[clave] = interaccion
     if interaccion is None:
-        _fallo_al_sentarse(juego, sim, 'no se le ha podido mandar')
+        _fallo_al_sentarse(juego, sim, 'no se le ha podido mandar {}'.format(nombre))
 
 
 def _fallo_al_sentarse(juego, sim, motivo):
@@ -502,9 +481,6 @@ def _fallo_al_sentarse(juego, sim, motivo):
     _log('{} no ha podido sentarse ({}, intento {} de {})', _nombre(sim), motivo, fallos, INTENTOS_SENTARSE)
     if fallos >= INTENTOS_SENTARSE:
         _dejar_fuera(juego, sim.sim_id, 'no consigue sentarse')
-    elif fallos >= INTENTOS_CON_HUECO and sim.sim_id not in _SIN_ASIENTO:
-        _log('{} se sentará en cualquier sitio del círculo', _nombre(sim))
-        _SIN_ASIENTO.add(sim.sim_id)
 
 
 def _gestionar_asientos(juego, botella):
@@ -523,7 +499,8 @@ def _gestionar_asientos(juego, botella):
             continue
         if anterior is not None and not _empezo(anterior):
             juego.mandadas[clave] = None
-            _fallo_al_sentarse(juego, sim, 'la interacción terminó sin llegar a sentarse')
+            _fallo_al_sentarse(juego, sim, '{} terminó sin empezar'.format(
+                getattr(getattr(anterior, 'affordance', None), '__name__', 'la interacción')))
             if sim.sim_id in juego.fuera:
                 continue
         _mandar_a_sentarse(sim, juego, botella)
@@ -572,21 +549,15 @@ def _siguiente_turno(juego, botella):
         juego.charla = None
         _log('Turno de {} (le tocará a {})', _nombre(sim), _nombre(pareja))
         _aviso(TEXTO_TURNO.format(_nombre(sim)))
-        _mandar_a_girar(juego, sim, botella, sentado=True)
+        _mandar_a_girar(juego, sim, botella)
         return
     _terminar_juego(juego, 'ronda completa')
 
 
-def _mandar_a_girar(juego, sim, botella, sentado):
+def _mandar_a_girar(juego, sim, botella):
     juego.giro_empezado = False
-    interaccion = None
-    si = _sentarse_en_marcha(sim, botella)
-    if sentado and si is not None:
-        interaccion = _empujar_mixer(sim, GIRAR_SENTADO, botella, si)
-    if interaccion is None:
-        _levantar_del_juego(sim, botella, 'Le toca girar')
-        interaccion = _empujar(sim, GIRAR, botella, PRIORIDAD_JUEGO)
-    juego.mandadas['girar'] = interaccion
+    _levantar_del_juego(sim, botella, 'Le toca girar')
+    juego.mandadas['girar'] = _empujar(sim, GIRAR, botella, PRIORIDAD_JUEGO)
     _cambiar_fase(juego, 'girando', ESPERA_GIRO)
 
 
@@ -600,9 +571,9 @@ def _giro_terminado(juego, completo):
         _preparar_beso(juego, botella, sim, pareja)
         return
     if not juego.reintentado and sim is not None and juego.girador not in juego.fuera:
-        _log('El giro de {} no se ha completado: se vuelve a mandar, esta vez de pie', _nombre(sim))
+        _log('El giro de {} no se ha completado: se vuelve a mandar', _nombre(sim))
         juego.reintentado = True
-        _mandar_a_girar(juego, sim, botella, sentado=False)
+        _mandar_a_girar(juego, sim, botella)
         return
     _log('El giro no se ha completado: se pasa al siguiente')
     _cambiar_fase(juego, 'volviendo', ESPERA_VOLVER)
@@ -659,7 +630,7 @@ def _empujar_beso(sim, pareja):
         if not resultado:
             logger.warn('No se pudo mandar el beso de {} a {}: {}', _nombre(sim), _nombre(pareja), resultado)
             return None
-        _log('{} va a besar a {}: {}', _nombre(sim), _nombre(pareja), resultado)
+        _log('{} va a besar a {}: charla {}, beso {}', _nombre(sim), _nombre(pareja), si, resultado)
         return _creada(sim, BESO, resultado)
     except Exception as e:
         logger.error('Error al mandar el beso: {}', e)
@@ -673,11 +644,8 @@ def _animar(juego, botella):
         si = _sentarse_en_marcha(sim, botella)
         if si is None:
             continue
-        interaccion = _empujar_mixer(sim, ANIMAR_SENTADO, botella, si)
-        if interaccion is None and ANIMAR_DE_PIE:
-            _cancelar(si, 'Animar a la pareja')
-            interaccion = _empujar(sim, ANIMAR, botella, PRIORIDAD_JUEGO)
-        juego.mandadas[('animar', sim.sim_id)] = interaccion
+        _cancelar(si, 'Animar a la pareja')
+        juego.mandadas[('animar', sim.sim_id)] = _empujar(sim, ANIMAR, botella, PRIORIDAD_JUEGO)
 
 
 def _acabar_charla(juego):
@@ -721,7 +689,6 @@ def _terminar_juego(juego, motivo, aviso=True):
             _levantar_del_juego(sim, botella, 'Fin del juego')
         _ASIENTOS.pop(sim_id, None)
         _POSTURA.pop(sim_id, None)
-        _SIN_ASIENTO.discard(sim_id)
 
 
 def _tick(juego):
@@ -755,9 +722,13 @@ def _tick(juego):
     elif juego.fase == 'levantando':
         pendientes = [clave for clave in ('levantarse_a', 'levantarse_b') if _pendiente(juego.mandadas.get(clave))]
         if not pendientes or juego.espera <= 0:
+            _log('Se han levantado (empezó: {} y {}): {}', _empezo(juego.mandadas.get('levantarse_a')),
+                 _empezo(juego.mandadas.get('levantarse_b')), _estado_beso(juego))
             _mandar_beso(juego)
     elif juego.fase == 'besando':
         beso = juego.mandadas.get('beso')
+        if not juego.beso_empezado and juego.espera % 10 == 0:
+            _log('Esperando el beso: {}', _estado_beso(juego))
         if not _pendiente(beso):
             _abortar_beso(juego, 'el beso ha terminado sin completarse (empezó: {}, {})'.format(
                 juego.beso_empezado, getattr(beso, '_finisher', '')))
@@ -788,7 +759,6 @@ def _empezar_juego(actor, botella, elegidos):
     _repartir_asientos(botella, _presentes(juego) + nuevos)
     for sim in nuevos:
         juego.fallos[sim.sim_id] = 0
-        _SIN_ASIENTO.discard(sim.sim_id)
         _POSTURA[sim.sim_id] = random.choice(SENTARSE)
     # Turnos en orden alrededor del círculo, empezando por quien abre el juego.
     base = _asiento(actor.sim_id, botella)
@@ -920,6 +890,32 @@ def _hacer_run_girar(original):
     return _run_interaction_gen
 
 
+def _hacer_run_ir_al_sitio(original):
+    """Al llegar al círculo: se coloca en su hueco y, al terminar, se sienta."""
+
+    def _run_interaction_gen(self, timeline):
+        self._jb_empezo = True
+        sim, botella = self.sim, self.target
+        juego = _juego_de(botella)
+        try:
+            if juego is not None:
+                _colocar_en_hueco(sim, botella)
+        except Exception as e:
+            logger.error('Error al colocar en el hueco: {}', e)
+        result = yield from original(self, timeline)
+        try:
+            juego = _juego_de(botella)
+            if juego is not None and sim.sim_id in juego.jugadores and sim.sim_id not in juego.fuera \
+                    and juego.mandadas.get(('sentarse', sim.sim_id)) is self:
+                juego.mandadas[('sentarse', sim.sim_id)] = None
+                _mandar_a_sentarse(sim, juego, botella)
+        except Exception as e:
+            logger.error('Error al mandar a sentarse: {}', e)
+        return result
+
+    return _run_interaction_gen
+
+
 def _hacer_run_marcar(original):
     """Solo apunta que la interacción ha empezado (Levantarse)."""
 
@@ -983,20 +979,21 @@ def _hacer_run_animar(original):
 
 
 _COMPORTAMIENTOS = [
-    ((JUGAR,), _hacer_run_jugar, None),
-    (SENTARSE, _hacer_run_sentarse, _hacer_constraint_sentarse),
-    ((GIRAR, GIRAR_SENTADO), _hacer_run_girar, None),
-    ((LEVANTARSE, ANIMAR_SENTADO), _hacer_run_marcar, None),
-    ((BESO,), _hacer_run_beso, None),
-    ((ANIMAR,), _hacer_run_animar, None),
+    ((JUGAR,), _hacer_run_jugar),
+    ((IR_AL_SITIO,), _hacer_run_ir_al_sitio),
+    (SENTARSE, _hacer_run_sentarse),
+    ((GIRAR,), _hacer_run_girar),
+    ((LEVANTARSE,), _hacer_run_marcar),
+    ((BESO,), _hacer_run_beso),
+    ((ANIMAR,), _hacer_run_animar),
 ]
-_TOTAL = sum(len(nombres) for nombres, _, _ in _COMPORTAMIENTOS)
+_TOTAL = sum(len(nombres) for nombres, _ in _COMPORTAMIENTOS)
 
 
 def _enganchar(gestor=None):
     if gestor is None:
         gestor = services.get_instance_manager(sims4.resources.Types.INTERACTION)
-    for nombres, hacer_run, hacer_constraint in _COMPORTAMIENTOS:
+    for nombres, hacer_run in _COMPORTAMIENTOS:
         for nombre in nombres:
             try:
                 clase = gestor.get(_id(nombre))
@@ -1006,10 +1003,6 @@ def _enganchar(gestor=None):
                 if getattr(clase, '_jennikita_botella', False):
                     continue
                 clase._run_interaction_gen = hacer_run(clase._run_interaction_gen)
-                if hacer_constraint is not None:
-                    nuevo = hacer_constraint(clase)
-                    if nuevo is not None:
-                        clase._constraint_gen = nuevo
                 clase._jennikita_botella = True
                 _ENGANCHADAS.append(nombre)
             except Exception as e:

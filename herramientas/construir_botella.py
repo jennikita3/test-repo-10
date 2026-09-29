@@ -32,8 +32,8 @@ TS4SCRIPT = os.path.join(CARPETA, 'jennikita_botella.ts4script')
 
 CLIP, CABECERA_CLIP, ASM, ANIMACION, INTERACCION = 0x6B20C4F3, 0xBC4A5044, 0x02D5DF13, 0xEE17C6AD, 0xE882D22F
 
-# Recursos de la versión 1 que ya no se usan: animaciones de Love4Sims (los
-# Sims usan ahora las del juego) y las interacciones que las ponían.
+# Recursos de versiones anteriores que ya no se usan: animaciones de Love4Sims
+# (los Sims usan ahora las del juego) y las interacciones que las ponían.
 OBSOLETOS = {
     (CLIP, 0x1AFED2115FB9A8CF), (CABECERA_CLIP, 0x1AFED2115FB9A8CF),  # Botella_GirarSim
     (CLIP, 0x5E8AD1107922403F), (CABECERA_CLIP, 0x5E8AD1107922403F),  # Botella_Animar
@@ -56,6 +56,9 @@ OBSOLETOS = {
     (INTERACCION, 0xCDEF5A4939752B9B),  # Botella_Girar (menú)
     (INTERACCION, 0xD1C70DA42FE42ABA),  # Botella_Mixer_Cruzado
     (INTERACCION, 0xDEFB4F5B239A5A6E),  # Botella_Mixer_Rodillas
+    # De la versión 3: girar y animar sin levantarse no reproducía la animación.
+    (INTERACCION, 0xAAE4F1AA2374A9D2),  # Botella_Girar_Sentado
+    (INTERACCION, 0xED3C608C4FE223EB),  # Botella_Animar_Sentado
 }
 
 

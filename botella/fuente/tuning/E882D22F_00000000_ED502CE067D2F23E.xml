@@ -58,10 +58,7 @@
       <V n="content" t="staging_content">
         <U n="staging_content">
           <U n="content_set">
-            <L n="affordance_links">
-              <T>12314232994179361234<!--Jennikita:Botella_Girar_Sentado--></T>
-              <T>17094644441343468523<!--Jennikita:Botella_Animar_Sentado--></T>
-            </L>
+            <L n="affordance_links" />
           </U>
         </U>
       </V>
