@@ -1,9 +1,11 @@
-# Juego de la botella (versión 2)
+# Juego de la botella (versión 3)
 
 Mod de Jennikita para Los Sims 4. La botella y la alfombra son de SIXAMcc.
 
-La versión 2 está rehecha desde cero para que los Sims usen las animaciones del juego en vez de las personalizadas.
+Desde la versión 2 está rehecho desde cero para que los Sims usen las animaciones del juego en vez de las personalizadas.
 La botella, la alfombra, los iconos y los textos son los mismos que antes.
+
+La versión 3 arregla lo que fallaba en la 2: los Sims no se sentaban en círculo, no se besaban, la botella giraba a destiempo y algunos se levantaban sin parar.
 
 ## Instalación
 
@@ -23,6 +25,9 @@ La botella, la alfombra, los iconos y los textos son los mismos que antes.
 4. La botella señala a alguien con quien se pueda besar. Los dos se levantan y se besan, el resto anima y todos vuelven a su sitio.
 5. Cuando todos han girado, se acaba el juego.
 
+Si un Sim se levanta por su cuenta, porque le mandas otra cosa o porque tiene una necesidad urgente, sale del juego y el resto sigue.
+Si un Sim no consigue llegar a su hueco, se sienta en otro sitio del círculo, y si tampoco lo consigue, se queda fuera.
+
 Quién puede besarse: adolescentes con adolescentes, y jóvenes adultos, adultos y ancianos entre sí. Nunca familiares.
 Si alguien no tiene con quién besarse, sale un aviso y se salta su turno.
 
@@ -33,17 +38,18 @@ Después del beso, los dos Sims reciben el estado de ánimo «¡Me tocó la bote
 | Momento | Animación |
 | --- | --- |
 | Sentarse | Posturas del juego «de rodillas» y «piernas cruzadas», las mismas de «Sentarse en el suelo» |
-| Girar | Solo se anima la botella; el Sim no la toca |
-| Beso | El beso normal del juego, dentro de una charla, sin las pruebas de romance del juego |
-| Animar | La animación del público del juego (`reactionlets_Audience_CheerRandom`) |
+| Girar | Solo se anima la botella; el Sim no la toca. Si el juego no le deja girarla sentado, se levanta para girar |
+| Beso | Los dos se ponen de pie y se besan con el beso normal del juego, dentro de una charla y sin las pruebas de romance del juego |
+| Animar | La animación del público del juego (`reactionlets_Audience_CheerRandom`). Si el juego no les deja animar sentados, se levantan para animar |
 
 ## Si algo falla
 
 - El mod apunta todo lo que pasa en cada partida en `Mods/jennikita_botella_log.txt`.
   Si algo no va bien, ese archivo dice en qué paso se ha quedado.
+  Por ejemplo, apunta a cuántos metros de su hueco se ha sentado cada Sim, y si ha podido girar y animar sin levantarse.
 - Trucos (abre la consola con Ctrl+Mayús+C):
   - `jennikita.botella_estado`: dice si el script está cargado y en qué punto está la partida.
-    Tienen que salir 6 de 6 interacciones enganchadas.
+    Tienen que salir 9 de 9 interacciones enganchadas.
   - `jennikita.botella_reiniciar`: termina las partidas en curso si algo se queda atascado.
 
 ## Para modificarlo
