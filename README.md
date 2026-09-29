@@ -99,4 +99,5 @@ Si vuelves a exportar el mono desde Sims 4 Studio, deja transparente el fondo de
 
 ## Icono del aviso
 
-El icono del aviso de las 21:00 solo estaba en formato DST (`00B2D882`), y el juego busca los iconos como PNG (`2F7D0004`). Se ha añadido la misma imagen en PNG con la misma instancia (`D4961EED372508C7`).
+El icono del aviso de las 21:00 es un PNG de 128×128 (`2F7D0004:00000000:D4961EED372508C7`), sacado de `camion_basura/icono_aviso_original.png` con el fondo blanco quitado.
+El juego busca los iconos como PNG. La versión antigua en DST (`00B2D882`) sigue en el `.package`, pero no se usa.
