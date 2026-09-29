@@ -89,3 +89,9 @@ El basurero vacía el cubo de fuera y lleva la bolsa al camión. Si la interacci
 - El camión se quita 5 minutos después de que se vaya el basurero.
 
 Solo se quitan las bolsas que saca el basurero. La basura que ya estaba en el suelo cuando llegó se queda, y es la que cuenta para la multa.
+
+## Sim blanco
+
+La textura del mono amarillo era opaca en todo el mapa de textura del sim, con fondo blanco. Como se pinta encima de la piel, el pelo y los zapatos, el basurero salía blanco como un maniquí.
+En el `.package` se ha dejado transparente todo lo que no es el mono: el fondo, las manos y el borde del cuello. El dibujo del mono no cambia.
+Si vuelves a exportar el mono desde Sims 4 Studio, deja transparente el fondo de la textura.
