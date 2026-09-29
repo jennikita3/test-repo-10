@@ -82,9 +82,10 @@ python3.7 herramientas/compilar_basurero.py
 
 ## Qué hace el basurero
 
-El basurero va al cubo de fuera, lo vacía, coge la bolsa de basura y se va andando del solar.
+El basurero llega ya con el mono amarillo puesto: se le pone en cuanto entra en la visita, antes de aparecer.
+Va al cubo de fuera, lo vacía, coge la bolsa de basura y, cuando termina la animación de cogerla, se va andando del solar con la bolsa en la mano.
 
-- Si suelta la bolsa en el suelo, la bolsa desaparece y él se va igualmente.
+- Si suelta la bolsa en el suelo, la bolsa desaparece.
 - Si pasan 20 minutos y no ha terminado, se va igualmente.
 - El camión se quita 5 minutos después de que se vaya el basurero.
 

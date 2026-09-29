@@ -23,6 +23,7 @@ MULTA = 20
 MONO_AMARILLO = 17202976458925047176
 MONOS_VIEJOS = (16040913242264747554, 10409532022171504658)
 INTERACCION_BUSCAR_CUBO = 11856208779766024785
+INTERACCION_COGER_BOLSA = 16573961949371287202
 HORA_AVISO = 21
 HORA_VISITA = 22
 ICONO_AVISO = 15318465186728577223
@@ -31,8 +32,9 @@ DISTANCIA_A_LO_LARGO = 8.0
 DISTANCIA_HACIA_CALLE = 5.5
 GIRO_EXTRA_GRADOS = 0.0
 
-# Minutos con la bolsa en la mano antes de irse (deja terminar la animacion de cogerla).
-MINUTOS_CON_BOLSA = 2
+# Con la bolsa en la mano, espera a que termine la animacion de cogerla, y como mucho
+# estos minutos, antes de irse.
+MINUTOS_MAX_COGIENDO_BOLSA = 6
 # Minutos como mucho que el basurero pasa en el solar antes de irse.
 MINUTOS_MAX_VISITA = 20
 # Minutos que se queda el camion despues de que se vaya el basurero.
@@ -265,9 +267,17 @@ def _empujar_buscar_cubo(sim):
 def _poner_mono(sim):
     """Pone el mono amarillo en la ropa que lleva ahora el basurero (sin casco, conserva los zapatos)."""
     try:
+        cat, idx = sim.sim_info.get_current_outfit()
+    except Exception:
+        _log(traceback.format_exc())
+        return
+    _poner_mono_en(sim.sim_info, cat, idx)
+
+
+def _poner_mono_en(si, cat, idx):
+    """Pone el mono amarillo en el conjunto (cat, idx) del sim."""
+    try:
         from sims.outfits.outfit_enums import BodyType
-        si = sim.sim_info
-        cat, idx = si.get_current_outfit()
         msg = si.save_outfits()
         n = -1
         cambiado = False
@@ -302,6 +312,34 @@ def _poner_mono(sim):
         _log(traceback.format_exc())
 
 
+def _al_entrar_en_situacion(situacion, sim):
+    """Pone el mono en la ropa de la situacion en cuanto el basurero entra, para que llegue ya con el."""
+    if getattr(situacion, "guid64", 0) != SITUACION_BASURERO:
+        return
+    try:
+        from sims.outfits.outfit_enums import OutfitCategory
+        si = sim.sim_info
+        ropa = (OutfitCategory.SITUATION, 0)
+        if not si.has_outfit(ropa):
+            ropa = si.get_current_outfit()
+        _poner_mono_en(si, ropa[0], ropa[1])
+        if si.get_current_outfit() != ropa:
+            si.set_current_outfit(ropa)
+        _log("Mono puesto al llegar el basurero")
+    except Exception:
+        _log(traceback.format_exc())
+
+
+def _haciendo(sim, guid):
+    try:
+        for si in list(sim.si_state):
+            if getattr(getattr(si, "affordance", None), "guid64", 0) == guid:
+                return True
+    except Exception:
+        _log(traceback.format_exc())
+    return False
+
+
 def _bolsas():
     return [o for o in list(services.object_manager().get_all())
             if getattr(getattr(o, "definition", None), "id", None) == BOLSA_DEF]
@@ -329,6 +367,15 @@ def _bolsas_del_basurero():
     return [o for o in _bolsas() if o.id not in _estado["bolsas_previas"]]
 
 
+def _quitar_bolsas(sims, tambien_en_la_mano):
+    for o in _bolsas_del_basurero():
+        if tambien_en_la_mano or not any(_la_lleva(sim, o) for sim in sims):
+            try:
+                o.destroy(source=o, cause="Jennikita: el basurero se lleva la basura")
+            except Exception:
+                _log(traceback.format_exc())
+
+
 def _bolsa_tirada(sims):
     for o in _bolsas_del_basurero():
         if not any(_la_lleva(sim, o) for sim in sims):
@@ -337,13 +384,10 @@ def _bolsa_tirada(sims):
 
 
 def _terminar(sim, sit):
-    """Quita las bolsas que ha sacado el basurero, cobra la multa si toca y lo manda irse."""
+    """Cobra la multa si toca y manda irse al basurero con la bolsa en la mano."""
     _estado["entregado"] = True
-    for o in _bolsas_del_basurero():
-        try:
-            o.destroy(source=sim, cause="Jennikita: el basurero se lleva la basura")
-        except Exception:
-            _log(traceback.format_exc())
+    # Las bolsas que haya dejado en el suelo se quitan; la de la mano se la lleva
+    _quitar_bolsas([sim], False)
     if _estado["camion"] is not None:
         _sonido(_estado["camion"], SONIDO_TRABAJANDO)
     if _estado["multa_pendiente"]:
@@ -375,6 +419,7 @@ def _tick(_=None):
             if r[2] <= 0:
                 _estado["retirar"] = None
                 sim, sit = r[0], r[1]
+                _quitar_bolsas([], True)
                 if services.object_manager().get(sim.id) is not None:
                     try:
                         sim.schedule_destroy_asap(source=sim, cause="Jennikita: el basurero se sube al camion")
@@ -411,14 +456,17 @@ def _tick(_=None):
                 _estado["mono"][sim.id] = t
                 if t in (1, 3, 8, 20):
                     _poner_mono(sim)
-            if not _estado["entregado"]:
+            if _estado["entregado"]:
+                _quitar_bolsas(list(sit.all_sims_in_situation_gen()), False)
+            else:
                 _estado["minutos"] += 1
                 sims = list(sit.all_sims_in_situation_gen())
                 for sim in sims:
                     motivo = None
                     if _bolsa_de(sim) is not None:
                         _estado["con_bolsa"][sim.id] = _estado["con_bolsa"].get(sim.id, 0) + 1
-                        if _estado["con_bolsa"][sim.id] >= MINUTOS_CON_BOLSA:
+                        cogiendo = _haciendo(sim, INTERACCION_COGER_BOLSA)
+                        if not cogiendo or _estado["con_bolsa"][sim.id] >= MINUTOS_MAX_COGIENDO_BOLSA:
                             motivo = "Ha cogido la basura del cubo"
                     elif _bolsa_tirada(sims):
                         motivo = "Ha soltado la bolsa en el suelo"
@@ -429,6 +477,7 @@ def _tick(_=None):
                         _terminar(sim, sit)
                         break
         elif _estado["camion"] is not None:
+            _quitar_bolsas([], False)
             # El basurero se ha ido: se quita el camion al rato
             if _estado["fin"] is None:
                 _estado["fin"] = 0
@@ -482,6 +531,29 @@ def _inyectar(clase, nombre):
 try:
     import zone
     _inyectar(zone.Zone, "on_loading_screen_animation_finished")
+except Exception:
+    _log(traceback.format_exc())
+
+
+def _inyectar_entrada_situacion():
+    from situations.custom_states.custom_states_situation import CustomStatesSituation
+    for clase in CustomStatesSituation.__mro__:
+        if "_on_add_sim_to_situation" in clase.__dict__:
+            original = clase.__dict__["_on_add_sim_to_situation"]
+
+            @functools.wraps(original)
+            def envoltura(self, sim, *args, **kwargs):
+                resultado = original(self, sim, *args, **kwargs)
+                _al_entrar_en_situacion(self, sim)
+                return resultado
+
+            setattr(clase, "_on_add_sim_to_situation", envoltura)
+            return
+    _log("No encuentro _on_add_sim_to_situation: el mono se pondra al primer minuto")
+
+
+try:
+    _inyectar_entrada_situacion()
 except Exception:
     _log(traceback.format_exc())
 
