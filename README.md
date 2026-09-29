@@ -66,3 +66,26 @@ El script avisa si hay textos nuevos o cambiados. Los textos nuevos se quedan en
 | (From Stepping On A Sim Turd) | (Por pisar una caca de Sim) |
 
 El mod es obra de Tinycoffee. Si vas a compartir esta traducción públicamente, pide permiso antes a su creador.
+
+# Camión de la basura funcional (Jennikita)
+
+Está en la carpeta `camion_basura/`. Copia los dos archivos a tu carpeta `Mods`, sustituyendo los antiguos:
+
+- `Jennikita_CamionBasura.package`
+- `Jennikita_CamionBasura.ts4script`
+
+El código del script es `camion_basura/jennikita_basura.py`. Si lo cambias, vuelve a crear el `.ts4script` con Python 3.7, que es la versión que usa el juego:
+
+```
+python3.7 herramientas/compilar_basurero.py
+```
+
+## Cómo se va el basurero
+
+El basurero vacía el cubo de fuera y lleva la bolsa al camión. Si la interacción de llevar la bolsa se corta, el script termina la visita él mismo:
+
+- Si lleva la bolsa 3 minutos sin ir hacia el camión, o la suelta en el suelo, la bolsa desaparece y él vuelve andando al camión.
+- Si pasan 20 minutos y no ha terminado, se va igualmente.
+- El camión se quita 5 minutos después de que se vaya el basurero.
+
+Solo se quitan las bolsas que saca el basurero. La basura que ya estaba en el suelo cuando llegó se queda, y es la que cuenta para la multa.
