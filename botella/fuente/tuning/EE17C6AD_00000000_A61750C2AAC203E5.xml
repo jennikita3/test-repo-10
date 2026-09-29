@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<I c="AnimationElement" i="animation" m="animation.animation_element" n="Jennikita:Botella_Anim_Girar" s="11968123331779101669">
+  <T n="asm_key">02d5df13:00000000:d9865e61599f5563</T>
+  <L n="begin_states">
+    <T>Girar</T>
+  </L>
+  <T n="target_name">spinbottle</T>
+</I>

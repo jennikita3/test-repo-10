@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<I c="SocialMixerInteraction" i="interaction" m="interactions.social.social_mixer_interaction" n="Jennikita:Botella_Beso" s="14110137633189194401">
+  <V n="_icon" t="resource_key">
+    <U n="resource_key">
+      <T n="key">00b2d882:00000000:449152d865c905ef</T>
+    </U>
+  </V>
+  <T n="allow_autonomous">False</T>
+  <T n="allow_user_directed">False</T>
+  <V n="content_score" t="disabled" />
+  <T n="display_name">0x35DFD9C8</T>
+  <L n="interaction_category_tags">
+    <E>Interaction_Chat</E>
+    <E>Interaction_Kiss</E>
+    <E>Interaction_Mixer</E>
+    <E>Interaction_All</E>
+    <E>Interaction_SocialAll</E>
+    <E>Interaction_SocialMixer</E>
+    <E>Interaction_Social_Touching</E>
+  </L>
+  <V n="outcome" t="single">
+    <U n="single">
+      <U n="actions">
+        <V n="animation_ref" t="enabled">
+          <U n="enabled">
+            <T n="factory">12052<!--AnimationElement: Soc_Romance_T_Kiss_Embrace_Succeed_basic--></T>
+          </U>
+        </V>
+        <L n="loot_list">
+          <T>12433722566241864096<!--Jennikita:Botella_Loot_Beso--></T>
+          <T>34722<!--LootActions: Rel_Gain_Small_LowStrength--></T>
+          <T>32480<!--LootActions: Loot_LTR_Romance_Medium_HighStrength--></T>
+          <T>24120<!--LootActions: Loot_SocialContext_Romance_Gain--></T>
+        </L>
+      </U>
+    </U>
+  </V>
+  <U n="sub_action">
+    <T n="base_weight">1</T>
+  </U>
+  <E n="target_type">TARGET</E>
+  <T n="test_incest">True</T>
+  <T n="visible">True</T>
+</I>
