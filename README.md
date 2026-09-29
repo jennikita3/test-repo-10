@@ -101,11 +101,13 @@ Al hacer clic en el basurero mientras está en tu solar, tus sims tienen dos opc
 El basurero no se entretiene: sigue con lo suyo y se va igual.
 
 Las interacciones, el estado de ánimo, los textos y los iconos los añade al `.package` `herramientas/basurero_interacciones.py`. Lo que hace cada interacción está en el script.
-Los iconos salen de `camion_basura/icono_saludar.png` e `icono_reciclaje.png`: para cambiarlos, sustituye el PNG y ejecuta
+Los iconos salen de `camion_basura/icono_saludar.png`, `icono_reciclaje.png` e `icono_aviso.png`. Para cambiar uno a partir de la imagen original (con fondo blanco), ejecuta:
 
 ```
-python3 herramientas/basurero_interacciones.py
+python3 herramientas/basurero_interacciones.py --icono saludar|reciclaje|aviso IMAGEN
 ```
+
+Quita el fondo blanco de fuera del aro, deja el icono en 128×128, guarda el original como `icono_*_original.png` y actualiza el `.package`.
 
 ## Sim blanco
 
@@ -115,5 +117,5 @@ Si vuelves a exportar el mono desde Sims 4 Studio, deja transparente el fondo de
 
 ## Icono del aviso
 
-El icono del aviso de las 21:00 es un PNG de 128×128 (`2F7D0004:00000000:D4961EED372508C7`), sacado de `camion_basura/icono_aviso_original.png` con el fondo blanco quitado.
+El icono del aviso de las 21:00 es un PNG de 128×128 (`2F7D0004:00000000:D4961EED372508C7`), sacado de `camion_basura/icono_aviso_original.png` con el fondo blanco quitado (ver «Hablar con el basurero» para cambiarlo).
 El juego busca los iconos como PNG. La versión antigua en DST (`00B2D882`) sigue en el `.package`, pero no se usa.

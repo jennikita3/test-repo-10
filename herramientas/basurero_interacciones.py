@@ -3,6 +3,11 @@
 
 Uso:
     python3 herramientas/basurero_interacciones.py
+    python3 herramientas/basurero_interacciones.py --icono saludar|reciclaje|aviso IMAGEN
+
+Con --icono, primero prepara el icono a partir de la imagen original: quita el fondo
+blanco de fuera del aro, la reduce a 128x128 y la guarda en camion_basura/icono_*.png
+(el original se guarda al lado como icono_*_original.png).
 
 Modifica camion_basura/Jennikita_CamionBasura.package y añade (o sustituye si ya están):
 - «Saludar al basurero» y «Preguntar por el reciclaje»: interacciones que salen al
@@ -156,6 +161,58 @@ def simdata_buff(plantilla):
     return bytes(d)
 
 
+ICONOS = {
+    "saludar": "icono_saludar",
+    "reciclaje": "icono_reciclaje",
+    "aviso": "icono_aviso",
+}
+ICONO_AVISO = 0xD4961EED372508C7
+
+
+def quitar_fondo(imagen):
+    """Deja transparente el fondo blanco que toca los bordes y reduce a 128x128."""
+    from collections import deque
+    import numpy as np
+    from PIL import ImageFilter
+    im = imagen.convert("RGB")
+    a = np.array(im).astype(int)
+    alto, ancho = a.shape[:2]
+    claro = (a.min(-1) > 225) & ((a.max(-1) - a.min(-1)) < 25)
+    fondo = np.zeros((alto, ancho), bool)
+    cola = deque()
+    bordes = [(y, x) for y in range(alto) for x in (0, ancho - 1)] + [(y, x) for x in range(ancho) for y in (0, alto - 1)]
+    for y, x in bordes:
+        if claro[y, x] and not fondo[y, x]:
+            fondo[y, x] = True
+            cola.append((y, x))
+    while cola:
+        y, x = cola.popleft()
+        for ny, nx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
+            if 0 <= ny < alto and 0 <= nx < ancho and claro[ny, nx] and not fondo[ny, nx]:
+                fondo[ny, nx] = True
+                cola.append((ny, nx))
+    mascara = Image.fromarray(np.where(fondo, 0, 255).astype(np.uint8))
+    x0, y0, x1, y1 = mascara.getbbox()
+    alpha = mascara.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(1.2))
+    im.putalpha(alpha)
+    lado, cx, cy, margen = max(x1 - x0, y1 - y0), (x0 + x1) // 2, (y0 + y1) // 2, 4
+    im = im.crop((cx - lado // 2 - margen, cy - lado // 2 - margen, cx + lado // 2 + margen, cy + lado // 2 + margen))
+    # reducir con alpha premultiplicado para que no quede borde blanco
+    arr = np.array(im).astype(float)
+    arr[..., :3] *= arr[..., 3:] / 255
+    arr = np.array(Image.fromarray(arr.clip(0, 255).astype(np.uint8), "RGBA").resize((128, 128), Image.LANCZOS)).astype(float)
+    al = arr[..., 3:]
+    arr[..., :3] = np.where(al > 0, arr[..., :3] * 255 / np.maximum(al, 1), 0)
+    return Image.fromarray(arr.clip(0, 255).astype(np.uint8), "RGBA")
+
+
+def preparar_icono(cual, ruta):
+    carpeta = os.path.join(RAIZ, "camion_basura")
+    original = Image.open(ruta)
+    original.convert("RGB").save(os.path.join(carpeta, ICONOS[cual] + "_original.png"), optimize=True)
+    quitar_fondo(original).save(os.path.join(carpeta, ICONOS[cual] + ".png"), optimize=True)
+
+
 def png(ruta):
     im = Image.open(ruta).convert("RGBA")
     if im.size != (128, 128):
@@ -166,6 +223,11 @@ def png(ruta):
 
 
 def main():
+    if len(sys.argv) == 4 and sys.argv[1] == "--icono" and sys.argv[2] in ICONOS:
+        preparar_icono(sys.argv[2], sys.argv[3])
+    elif len(sys.argv) != 1:
+        raise SystemExit(__doc__)
+
     cabecera, recursos = read_package(PAQUETE)
     por_tgi = {(r.type, r.group, r.instance): r for r in recursos}
 
@@ -188,6 +250,8 @@ def main():
     poner(T_SIMDATA, GRUPO_SIMDATA_BUFF, fnv64(BUFF), simdata_buff(simdata))
     poner(T_PNG, 0, ICONO_SALUDAR, png(os.path.join(RAIZ, "camion_basura", "icono_saludar.png")))
     poner(T_PNG, 0, ICONO_RECICLAJE, png(os.path.join(RAIZ, "camion_basura", "icono_reciclaje.png")))
+    if os.path.exists(os.path.join(RAIZ, "camion_basura", "icono_aviso.png")):
+        poner(T_PNG, 0, ICONO_AVISO, png(os.path.join(RAIZ, "camion_basura", "icono_aviso.png")))
 
     tablas = [r for r in recursos if r.type == T_STBL and r.instance & 0x00FFFFFFFFFFFFFF == TABLA_TEXTOS]
     assert tablas, "no encuentro la tabla de textos del basurero"
