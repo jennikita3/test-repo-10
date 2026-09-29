@@ -91,6 +91,22 @@ Va al cubo de fuera, lo vacía, coge la bolsa de basura y, cuando termina la ani
 
 Solo se quitan las bolsas que saca el basurero. La basura que ya estaba en el suelo cuando llegó se queda, y es la que cuenta para la multa.
 
+## Hablar con el basurero
+
+Al hacer clic en el basurero mientras está en tu solar, tus sims tienen dos opciones:
+
+- **Saludar al basurero**: sube un poco la amistad y el sim se pone de buen humor con «Basurero simpático» (Feliz +1, 4 horas).
+- **Preguntar por el reciclaje**: sube un poco la amistad y sale una notificación con un consejo de reciclaje al azar.
+
+El basurero no se entretiene: sigue con lo suyo y se va igual.
+
+Las interacciones, el estado de ánimo, los textos y los iconos los añade al `.package` `herramientas/basurero_interacciones.py`. Lo que hace cada interacción está en el script.
+Los iconos salen de `camion_basura/icono_saludar.png` e `icono_reciclaje.png`: para cambiarlos, sustituye el PNG y ejecuta
+
+```
+python3 herramientas/basurero_interacciones.py
+```
+
 ## Sim blanco
 
 La textura del mono amarillo era opaca en todo el mapa de textura del sim, con fondo blanco. Como se pinta encima de la piel, el pelo y los zapatos, el basurero salía blanco como un maniquí.

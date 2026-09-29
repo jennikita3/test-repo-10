@@ -27,6 +27,24 @@ INTERACCION_COGER_BOLSA = 16573961949371287202
 HORA_AVISO = 21
 HORA_VISITA = 22
 ICONO_AVISO = 15318465186728577223
+# Interacciones con el basurero (las crea herramientas/basurero_interacciones.py)
+INTERACCION_SALUDAR = 15214809009877301499
+INTERACCION_RECICLAJE = 11109812326371183564
+BUFF_BASURERO_SIMPATICO = 13547429730650624046
+ICONO_RECICLAJE = 10213119247726398749
+OBJETO_SIM = 14965
+AMISTAD_SALUDAR = 5
+AMISTAD_RECICLAJE = 3
+CONSEJOS_RECICLAJE = (
+    "Aclara los envases antes de tirarlos: así no huelen ni atraen bichos.",
+    "El papel y el cartón, doblados y sin restos de comida, al contenedor azul.",
+    "Las latas, las botellas de plástico y los briks van al contenedor amarillo.",
+    "El vidrio va al contenedor verde, pero sin tapones: esos van al amarillo.",
+    "Las pilas nunca a la basura normal: llévalas a un punto de recogida.",
+    "Los restos de comida y de las plantas sirven para hacer compost en el jardín.",
+    "Si el cubo está lleno, no dejes bolsas por el suelo o te caerá una multa.",
+    "Reutilizar también cuenta: un tarro de cristal es un bote de galletas estupendo.",
+)
 
 DISTANCIA_A_LO_LARGO = 8.0
 DISTANCIA_HACIA_CALLE = 5.5
@@ -340,6 +358,79 @@ def _haciendo(sim, guid):
     return False
 
 
+def _es_basurero(sim):
+    sit = _situacion()
+    return sit is not None and any(s is sim for s in sit.all_sims_in_situation_gen())
+
+
+def _es_de_mi_casa(sim):
+    try:
+        hogar = services.active_household()
+        return hogar is not None and sim.household_id == hogar.id
+    except Exception:
+        return False
+
+
+def _subir_amistad(sim, otro, cantidad):
+    try:
+        services.relationship_service().add_relationship_score(sim.sim_id, otro.sim_id, cantidad)
+    except Exception:
+        _log(traceback.format_exc())
+
+
+def _notificar_consejo():
+    import random
+    texto = random.choice(CONSEJOS_RECICLAJE)
+    try:
+        from ui.ui_dialog_notification import UiDialogNotification
+        from sims4.localization import LocalizationHelperTuning
+        from distributor.shared_messages import IconInfoData
+        import sims4.resources
+        clave = sims4.resources.get_resource_key(ICONO_RECICLAJE, sims4.resources.Types.PNG)
+        n = UiDialogNotification.TunableFactory().default((services.get_active_sim()),
+          text=(lambda *a, **k: LocalizationHelperTuning.get_raw_text(texto)),
+          title=(lambda *a, **k: LocalizationHelperTuning.get_raw_text("El basurero dice:")),
+          icon=(lambda *a, **k: IconInfoData(icon_resource=clave)))
+        n.show_dialog()
+    except Exception:
+        _log(traceback.format_exc())
+        _notificar("El basurero dice:", texto)
+
+
+def _saludar(sim, basurero):
+    _subir_amistad(sim, basurero, AMISTAD_SALUDAR)
+    try:
+        from sims4.resources import Types
+        buff = services.get_instance_manager(Types.BUFF).get(BUFF_BASURERO_SIMPATICO)
+        if buff is None:
+            _log("No encuentro el estado de animo del basurero (falta el .package?)")
+        else:
+            sim.sim_info.add_buff_from_op(buff)
+    except Exception:
+        _log(traceback.format_exc())
+
+
+def _preguntar_reciclaje(sim, basurero):
+    _subir_amistad(sim, basurero, AMISTAD_RECICLAJE)
+    _notificar_consejo()
+
+
+def _anadir_interacciones_al_sim():
+    """Mete las interacciones del basurero en el menu de los sims (una sola vez)."""
+    from sims4.resources import Types
+    sim_tuning = services.get_instance_manager(Types.OBJECT).get(OBJETO_SIM)
+    interacciones = services.get_instance_manager(Types.INTERACTION)
+    nuevas = []
+    for guid in (INTERACCION_SALUDAR, INTERACCION_RECICLAJE):
+        afd = interacciones.get(guid)
+        if afd is None:
+            _log("No encuentro la interaccion {} (falta el .package?)".format(guid))
+        elif afd not in sim_tuning._super_affordances:
+            nuevas.append(afd)
+    if nuevas:
+        sim_tuning._super_affordances = tuple(sim_tuning._super_affordances) + tuple(nuevas)
+
+
 def _bolsas():
     return [o for o in list(services.object_manager().get_all())
             if getattr(getattr(o, "definition", None), "id", None) == BOLSA_DEF]
@@ -509,6 +600,10 @@ def _arrancar():
                    bolsas_previas=set(), con_bolsa={}, minutos=0)
     if _situacion() is None:
         _borrar_camiones()
+    try:
+        _anadir_interacciones_al_sim()
+    except Exception:
+        _log(traceback.format_exc())
     _estado["alarma"] = alarms.add_alarm(_DUENO, date_and_time.create_time_span(minutes=1), _tick, repeating=True)
 
 
@@ -533,6 +628,41 @@ try:
     _inyectar(zone.Zone, "on_loading_screen_animation_finished")
 except Exception:
     _log(traceback.format_exc())
+
+
+# Clases de las interacciones con el basurero. El .package las usa con m="jennikita_basura".
+try:
+    from interactions.base.immediate_interaction import ImmediateSuperInteraction
+    from event_testing.results import TestResult
+except Exception:
+    ImmediateSuperInteraction = None
+    _log(traceback.format_exc())
+
+if ImmediateSuperInteraction is not None:
+    class _InteraccionBasurero(ImmediateSuperInteraction):
+        _accion = None
+
+        @classmethod
+        def _test(cls, target, context, **kwargs):
+            if target is None or not _es_basurero(target):
+                return TestResult(False, "No es el basurero")
+            if context.sim is None or context.sim is target or not _es_de_mi_casa(context.sim):
+                return TestResult(False, "Solo para los sims de tu casa")
+            return super()._test(target, context, **kwargs)
+
+        def _run_interaction_gen(self, timeline):
+            try:
+                type(self)._accion(self.sim, self.target)
+            except Exception:
+                _log(traceback.format_exc())
+            return True
+            yield
+
+    class SaludarBasurero(_InteraccionBasurero):
+        _accion = staticmethod(_saludar)
+
+    class PreguntarReciclaje(_InteraccionBasurero):
+        _accion = staticmethod(_preguntar_reciclaje)
 
 
 def _inyectar_entrada_situacion():
