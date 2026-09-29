@@ -20,7 +20,6 @@ SONIDO_LLEGADA = 4448119419397510525
 SONIDO_TRABAJANDO = 544368327340296755
 ESTADO_VOLCADO = 15354
 MULTA = 20
-INTERACCION_IR_AL_CAMION = 15390566020953443435
 MONO_AMARILLO = 17202976458925047176
 MONOS_VIEJOS = (16040913242264747554, 10409532022171504658)
 INTERACCION_BUSCAR_CUBO = 11856208779766024785
@@ -31,26 +30,22 @@ ICONO_AVISO = 15318465186728577223
 DISTANCIA_A_LO_LARGO = 8.0
 DISTANCIA_HACIA_CALLE = 5.5
 GIRO_EXTRA_GRADOS = 0.0
-DISTANCIA_ENTREGA = 2.5
 
-# Minutos seguidos con la bolsa en la mano sin ir hacia el camion: se da por
-# hecho que la interaccion de llevarla se ha cortado y el script la termina.
-MINUTOS_SIN_IR_AL_CAMION = 3
+# Minutos con la bolsa en la mano antes de irse (deja terminar la animacion de cogerla).
+MINUTOS_CON_BOLSA = 2
 # Minutos como mucho que el basurero pasa en el solar antes de irse.
 MINUTOS_MAX_VISITA = 20
 # Minutos que se queda el camion despues de que se vaya el basurero.
 MINUTOS_CAMION_TRAS_IRSE = 5
-# Minutos de margen para que el basurero llegue andando al camion antes de quitarlo.
+# Minutos de margen para que el basurero salga andando del solar antes de quitarlo.
 MINUTOS_PARA_IRSE = 15
 
 _AJUSTE = {'calle': DISTANCIA_HACIA_CALLE, 'largo': DISTANCIA_A_LO_LARGO, 'giro': GIRO_EXTRA_GRADOS}
 
 _estado = {
-    'quieto': {},
     'retirar': None,
     'mono': {},
     'empujados': set(),
-    'tics_bolsa': 0,
     'dia_aviso': -1,
     'dia_visita': -1,
     'camion': None,
@@ -59,7 +54,7 @@ _estado = {
     'fin': None,
     'alarma': None,
     'bolsas_previas': set(),
-    'sin_ir': {},
+    'con_bolsa': {},
     'minutos': 0,
 }
 
@@ -341,12 +336,12 @@ def _bolsa_tirada(sims):
     return False
 
 
-def _terminar(sim, sit, andando):
-    """Echa al camion todas las bolsas del basurero, cobra la multa si toca y lo manda irse."""
+def _terminar(sim, sit):
+    """Quita las bolsas que ha sacado el basurero, cobra la multa si toca y lo manda irse."""
     _estado["entregado"] = True
     for o in _bolsas_del_basurero():
         try:
-            o.destroy(source=sim, cause="Jennikita: bolsa al camion")
+            o.destroy(source=sim, cause="Jennikita: el basurero se lleva la basura")
         except Exception:
             _log(traceback.format_exc())
     if _estado["camion"] is not None:
@@ -354,47 +349,18 @@ def _terminar(sim, sit, andando):
     if _estado["multa_pendiente"]:
         _estado["multa_pendiente"] = False
         _cobrar_multa()
-    if andando:
-        # Se va andando hasta el punto de llegada, que es donde esta el camion
-        try:
-            services.get_zone_situation_manager().make_sim_leave_now_must_run(sim)
-            _estado["retirar"] = [sim, sit, MINUTOS_PARA_IRSE]
-            _log("El basurero vuelve andando al camion")
-            return
-        except Exception:
-            _log(traceback.format_exc())
+    try:
+        services.get_zone_situation_manager().make_sim_leave_now_must_run(sim)
+        _estado["retirar"] = [sim, sit, MINUTOS_PARA_IRSE]
+        _log("El basurero se va andando")
+        return
+    except Exception:
+        _log(traceback.format_exc())
     try:
         sim.fade_out()
     except Exception:
         pass
     _estado["retirar"] = [sim, sit, 3]
-
-
-def _haciendo(sim, guid):
-    try:
-        for si in list(sim.si_state):
-            if getattr(getattr(si, "affordance", None), "guid64", 0) == guid:
-                return True
-
-    except Exception:
-        _log(traceback.format_exc())
-
-    return False
-
-
-def _dist(a, b):
-    return math.sqrt((a.x - b.x) ** 2 + (a.z - b.z) ** 2)
-
-
-def _trasera_camion():
-    c = _estado["camion"]
-    if c is None:
-        return
-    try:
-        adelante = c.orientation.transform_vector(sims4.math.Vector3.Z_AXIS())
-        return sims4.math.Vector3(c.position.x - adelante.x * 6.5, c.position.y, c.position.z - adelante.z * 6.5)
-    except Exception:
-        return c.position
 
 
 def _tick(_=None):
@@ -430,8 +396,7 @@ def _tick(_=None):
                 _estado["entregado"] = False
                 _estado["empujados"] = set()
                 _estado["mono"] = {}
-                _estado["tics_bolsa"] = 0
-                _estado["sin_ir"] = {}
+                _estado["con_bolsa"] = {}
                 _estado["minutos"] = 0
                 _estado["bolsas_previas"] = set(o.id for o in _bolsas())
                 _estado["multa_pendiente"] = _hay_problemas()
@@ -448,38 +413,20 @@ def _tick(_=None):
                     _poner_mono(sim)
             if not _estado["entregado"]:
                 _estado["minutos"] += 1
-                centro, _s = _punto_llegada()
-                trasera = _trasera_camion()
                 sims = list(sit.all_sims_in_situation_gen())
                 for sim in sims:
                     motivo = None
-                    bolsa = _bolsa_de(sim)
-                    if bolsa is not None:
-                        d1 = _dist(sim.position, centro) if centro is not None else 999
-                        d2 = _dist(sim.position, trasera) if trasera is not None else 999
-                        _estado["tics_bolsa"] += 1
-                        if _estado["tics_bolsa"] % 5 == 1:
-                            _log("Lleva la bolsa. Distancia al punto de llegada: {:.1f} m, a la trasera del camion: {:.1f} m".format(d1, d2))
-                        yendo = _haciendo(sim, INTERACCION_IR_AL_CAMION)
-                        antes = _estado["quieto"].get(sim.id)
-                        _estado["quieto"][sim.id] = sim.position
-                        parado = antes is not None and _dist(antes, sim.position) < 0.05
-                        _estado["sin_ir"][sim.id] = 0 if yendo else _estado["sin_ir"].get(sim.id, 0) + 1
-                        if yendo and not parado:
-                            _log("Va hacia el camion con la bolsa ({:.1f} m del punto de llegada)".format(d1))
-                        if yendo and parado:
-                            _log("Bolsa entregada en el camion")
-                            _terminar(sim, sit, False)
-                            break
-                        if _estado["sin_ir"][sim.id] >= MINUTOS_SIN_IR_AL_CAMION:
-                            motivo = "Tiene la bolsa pero no va hacia el camion"
+                    if _bolsa_de(sim) is not None:
+                        _estado["con_bolsa"][sim.id] = _estado["con_bolsa"].get(sim.id, 0) + 1
+                        if _estado["con_bolsa"][sim.id] >= MINUTOS_CON_BOLSA:
+                            motivo = "Ha cogido la basura del cubo"
                     elif _bolsa_tirada(sims):
                         motivo = "Ha soltado la bolsa en el suelo"
                     if motivo is None and _estado["minutos"] >= MINUTOS_MAX_VISITA:
                         motivo = "Lleva {} minutos en el solar sin terminar".format(_estado["minutos"])
                     if motivo is not None:
-                        _log(motivo + ": recoge la bolsa y se va")
-                        _terminar(sim, sit, True)
+                        _log(motivo + ": se va")
+                        _terminar(sim, sit)
                         break
         elif _estado["camion"] is not None:
             # El basurero se ha ido: se quita el camion al rato
@@ -509,8 +456,8 @@ def _arrancar():
     except Exception:
         pass
 
-    _estado.update(quieto={}, retirar=None, mono={}, empujados=set(), tics_bolsa=0, camion=None, multa_pendiente=False, entregado=False, fin=None,
-                   bolsas_previas=set(), sin_ir={}, minutos=0)
+    _estado.update(retirar=None, mono={}, empujados=set(), camion=None, multa_pendiente=False, entregado=False, fin=None,
+                   bolsas_previas=set(), con_bolsa={}, minutos=0)
     if _situacion() is None:
         _borrar_camiones()
     _estado["alarma"] = alarms.add_alarm(_DUENO, date_and_time.create_time_span(minutes=1), _tick, repeating=True)

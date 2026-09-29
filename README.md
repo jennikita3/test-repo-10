@@ -80,11 +80,11 @@ El código del script es `camion_basura/jennikita_basura.py`. Si lo cambias, vue
 python3.7 herramientas/compilar_basurero.py
 ```
 
-## Cómo se va el basurero
+## Qué hace el basurero
 
-El basurero vacía el cubo de fuera y lleva la bolsa al camión. Si la interacción de llevar la bolsa se corta, el script termina la visita él mismo:
+El basurero va al cubo de fuera, lo vacía, coge la bolsa de basura y se va andando del solar.
 
-- Si lleva la bolsa 3 minutos sin ir hacia el camión, o la suelta en el suelo, la bolsa desaparece y él vuelve andando al camión.
+- Si suelta la bolsa en el suelo, la bolsa desaparece y él se va igualmente.
 - Si pasan 20 minutos y no ha terminado, se va igualmente.
 - El camión se quita 5 minutos después de que se vaya el basurero.
 
@@ -95,3 +95,7 @@ Solo se quitan las bolsas que saca el basurero. La basura que ya estaba en el su
 La textura del mono amarillo era opaca en todo el mapa de textura del sim, con fondo blanco. Como se pinta encima de la piel, el pelo y los zapatos, el basurero salía blanco como un maniquí.
 En el `.package` se ha dejado transparente todo lo que no es el mono: el fondo, las manos y el borde del cuello. El dibujo del mono no cambia.
 Si vuelves a exportar el mono desde Sims 4 Studio, deja transparente el fondo de la textura.
+
+## Icono del aviso
+
+El icono del aviso de las 21:00 solo estaba en formato DST (`00B2D882`), y el juego busca los iconos como PNG (`2F7D0004`). Se ha añadido la misma imagen en PNG con la misma instancia (`D4961EED372508C7`).
